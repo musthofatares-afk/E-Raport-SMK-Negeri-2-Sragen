@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>e-Rapor SMK Negeri 2 Sragen</title>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f2; color: #1a1a1a; }
+
+    /* TOPBAR */
+    .topbar { background: white; border-bottom: 1px solid #e5e5e5; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 10; }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; }
+    .logo { width: 28px; height: 28px; background: #185FA5; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+    .logo svg { width: 16px; height: 16px; fill: white; }
+    .brand-name { font-size: 15px; font-weight: 600; }
+    .brand-sub { font-size: 12px; color: #666; }
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
+    .badge { font-size: 11px; padding: 3px 8px; border-radius: 99px; background: #E6F1FB; color: #185FA5; font-weight: 500; }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; background: #185FA5; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; }
+
+    /* LAYOUT */
+    .layout { display: flex; min-height: calc(100vh - 52px); }
+
+    /* SIDEBAR */
+    .sidebar { width: 200px; background: white; border-right: 1px solid #e5e5e5; padding: 1rem 0; flex-shrink: 0; position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto; }
+    .nav-section { font-size: 10px; font-weight: 600; color: #999; padding: 0 1rem; margin: 1rem 0 0.4rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 1rem; font-size: 13px; color: #555; cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; user-select: none; }
+    .nav-item:hover { background: #f5f5f2; color: #1a1a1a; }
+    .nav-item.active { background: #E6F1FB; color: #185FA5; border-left-color: #185FA5; font-weight: 600; }
+    .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* MAIN CONTENT */
+    .main { flex: 1; padding: 1.5rem; overflow-x: hidden; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-header { margin-bottom: 1.5rem; }
+    .page-title { font-size: 18px; font-weight: 600; }
+    .page-sub { font-size: 13px; color: #666; margin-top: 3px; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+    .stat-card { background: #f0f0eb; border-radius: 8px; padding: 1rem; }
+    .stat-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+    .stat-value { font-size: 22px; font-weight: 600; }
+    .stat-hint { font-size: 11px; color: #999; margin-top: 2px; }
+
+    /* CARD & TABLE */
+    .card { background: white; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    .card-title { font-size: 14px; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
+    table { width: 100%; font-size: 13px; border-collapse: collapse; }
+    th { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e5e5; color: #666; font-size: 12px; }
+    td { padding: 9px 10px; border-bottom: 1px solid #f0f0f0; }
+
+    /* PROGRESS BAR */
+    .progress-bar { height: 6px; background: #f0f0eb; border-radius: 99px; overflow: hidden; margin-top: 4px; }
+    .progress-fill { height: 100%; border-radius: 99px; background: #185FA5; transition: width 0.3s; }
+
+    /* CHIPS & BUTTONS */
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+    .status-selesai { background: #EAF3DE; color: #3B6D11; }
+    .status-proses { background: #FAEEDA; color: #854F0B; }
+    .status-belum { background: #f0f0eb; color: #5F5E5A; }
+    .nilai-chip { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+    .nilai-a { background: #EAF3DE; color: #3B6D11; }
+    .nilai-b { background: #E6F1FB; color: #185FA5; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid #ddd; background: white; }
+    .btn-primary { background: #185FA5; color: white; border-color: #185FA5; }
+    .input-nilai { width: 56px; text-align: center; padding: 4px 6px; border: 1px solid #ddd; border-radius: 4px; }
+
+    /* RAPOR PREVIEW */
+    .rapor-preview { background: white; border: 1px solid #e5e5e5; border-radius: 12px; padding: 2rem; max-width: 640px; margin: 0 auto; color: #222; }
+    .rapor-header { text-align: center; border-bottom: 2px solid #185FA5; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+    .rapor-info { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 12px; margin-bottom: 1.5rem; }
+    .rapor-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .rapor-table th { background: #185FA5; color: white; padding: 6px 8px; text-align: left; }
+    .rapor-table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+    .rapor-footer { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
+    .rapor-ttd { text-align: center; font-size: 12px; }
+    .ttd-line { border-top: 1px solid #aaa; margin-top: 50px; width: 140px; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #185FA5; color: white; padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: 0.3s; z-index: 999; pointer-events: none; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="logo"><svg viewBox="0 0 16 16"><path d="M2 3h12v2H2zm0 4h8v2H2zm0 4h10v2H2z"/></svg></div>
+    <div>
+      <div class="brand-name">e-Rapor</div>
+      <div class="brand-sub">SMK Negeri 2 Sragen — Kurikulum Merdeka</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="badge">Semester Genap 2024/2025</span>
+    <div class="avatar">AS</div>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="nav-section">Utama</div>
+    <div class="nav-item active" onclick="showPage('dashboard', this)"><div class="nav-dot"></div> Dashboard</div>
+    <div class="nav-item" onclick="showPage('input', this)"><div class="nav-dot"></div> Input Nilai</div>
+    <div class="nav-item" onclick="showPage('rapor', this)"><div class="nav-dot"></div> Cetak Rapor</div>
+    <div class="nav-section">Data</div>
+    <div class="nav-item" onclick="showPage('siswa', this)"><div class="nav-dot"></div> Data Siswa</div>
+    <div class="nav-item" onclick="showPage('sinkron', this)"><div class="nav-dot"></div> Sinkronisasi</div>
+    <div class="nav-section">Akun</div>
+    <div class="nav-item" onclick="showPage('pengaturan', this)"><div class="nav-dot"></div> Pengaturan</div>
+  </div>
+
+  <div class="main">
+    <div class="page active" id="page-dashboard">
+      <div class="page-header"><div class="page-title">Dashboard</div></div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total Siswa</div><div class="stat-value">324</div></div>
+        <div class="stat-card"><div class="stat-label">Rapor Selesai</div><div class="stat-value" id="stat-selesai">187</div></div>
+        <div class="stat-card"><div class="stat-label">Nilai Belum Diisi</div><div class="stat-value">42</div></div>
+        <div class="stat-card"><div class="stat-label">Siap Cetak</div><div class="stat-value">145</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Progres input nilai per kelas</div>
+        <table>
+          <thead><tr><th>Kelas</th><th>Wali Kelas</th><th>Progres</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>X-1</td><td>Budi Santoso</td><td><div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div></td><td><span class="status-chip status-selesai">Selesai</span></td></tr>
+            <tr><td>X-2</td><td>Siti Rahayu</td><td><div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div></td><td><span class="status-chip status-proses">Proses</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="page" id="page-input">
+      <div class="page-header"><div class="page-title">Input Nilai</div></div>
+      <div class="card">
+        <div class="card-title">
+            <span>Input Nilai — Kelas X-1</span>
+            <button class="btn btn-primary" onclick="simpanFirebase()">Simpan ke Cloud</button>
+        </div>
+        <table>
+          <thead><tr><th>Nama Siswa</th><th>NISN</th><th>Harian</th><th>Tengah</th><th>Akhir</th><th>Rata</th><th>Predikat</th></tr></thead>
+          <tbody id="tbody-input"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="page" id="page-rapor">
+      <div class="page-header"><div class="page-title">Cetak Rapor</div></div>
+      <div class="rapor-preview">
+        <div class="rapor-header">
+            <h3>LAPORAN HASIL BELAJAR PESERTA DIDIK</h3>
+            <p>SMK Negeri 2 Sragen</p>
+            <p style="font-size: 11px">Tahun Pelajaran 2024/2025 — Semester Genap</p>
+        </div>
+        <div class="rapor-info">
+          <div>Nama: <strong id="r-nama">Andi Setiawan</strong></div>
+          <div>Kelas: <strong>X-1</strong></div>
+          <div>NISN: <span id="r-nisn">0072345678</span></div>
+        </div>
+        <table class="rapor-table">
+          <thead><tr><th>No</th><th>Mata Pelajaran</th><th>Nilai</th><th>Predikat</th></tr></thead>
+          <tbody id="r-tbody"></tbody>
+        </table>
+        <div class="rapor-footer">
+          <div class="rapor-ttd">
+            <p>Sragen, 21 Juni 2025</p>
+            <p>Kepala Sekolah,</p>
+            <div class="ttd-line"></div>
+            <p><strong>Dr. Sutarno, M.Pd.</strong></p>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:20px" onclick="window.print()">Cetak PDF</button>
+      </div>
+    </div>
+
+    <div class="page" id="page-siswa"><div class="page-header"><div class="page-title">Data Siswa</div></div><div class="card"><p>Memuat data dari Dapodik...</p></div></div>
+    <div class="page" id="page-sinkron"><div class="page-header"><div class="page-title">Sinkronisasi Cloud</div></div><div class="card"><button class="btn" onclick="showToast('Sinkronisasi Berhasil!')">Sync Now</button></div></div>
+    <div class="page" id="page-pengaturan"><div class="page-header"><div class="page-title">Pengaturan</div></div><div class="card"><p>Konfigurasi Akun Administrator</p></div></div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // 1. CONFIG FIREBASE (Silakan ganti URL-nya)
+  const firebaseConfig = { databaseURL: "https://PROYEK-ANDA-DEFAULT.firebaseio.com" };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // 2. DATA DUMMY (Sesuai aslinya)
+  let siswaData = [
+    {nama:'Andi Setiawan', nisn:'0072345678', sh:85, st:88, sa:91},
+    {nama:'Bintang Pratiwi', nisn:'0083456789', sh:78, st:80, sa:82}
+  ];
+
+  // 3. FUNGSI NAVIGASI
+  function showPage(id, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    el.classList.add('active');
+    if(id === 'rapor') renderRapor();
+  }
+
+  // 4. RENDER INPUT NILAI
+  function renderInput() {
+    const tbody = document.getElementById('tbody-input');
+    tbody.innerHTML = siswaData.map((s, i) => {
+      const avg = Math.round((s.sh + s.st + s.sa) / 3);
+      return `<tr>
+        <td>${s.nama}</td>
+        <td style="color:#999">${s.nisn}</td>
+        <td><input class="input-nilai" type="number" value="${s.sh}" onchange="updateData(${i},'sh',this.value)"></td>
+        <td><input class="input-nilai" type="number" value="${s.st}" onchange="updateData(${i},'st',this.value)"></td>
+        <td><input class="input-nilai" type="number" value="${s.sa}" onchange="updateData(${i},'sa',this.value)"></td>
+        <td style="font-weight:600">${avg}</td>
+        <td><span class="nilai-chip ${avg>=80?'nilai-a':'nilai-b'}">${avg>=80?'A':'B'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function updateData(idx, field, val) {
+    siswaData[idx][field] = parseInt(val) || 0;
+    renderInput();
+  }
+
+  // 5. RENDER RAPOR
+  function renderRapor() {
+    const s = siswaData[0]; // Pratinjau siswa pertama
+    document.getElementById('r-nama').innerText = s.nama;
+    document.getElementById('r-nisn').innerText = s.nisn;
+    const avg = Math.round((s.sh + s.st + s.sa) / 3);
+    document.getElementById('r-tbody').innerHTML = `<tr><td>1</td><td>Matematika</td><td>${avg}</td><td>${avg>=80?'A':'B'}</td></tr>`;
+  }
+
+  // 6. SIMPAN FIREBASE
+  function simpanFirebase() {
+    db.ref('eRapor/nilai').set(siswaData)
+      .then(() => showToast('Berhasil disimpan ke Cloud!'))
+      .catch(() => showToast('Gagal! Cek koneksi Firebase.'));
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Init
+  renderInput();
+</script>
+</body>
+</html>

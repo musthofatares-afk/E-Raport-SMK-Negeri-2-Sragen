@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem E-Raport SMKN 2 Sragen</title>
+  <style>
+    /* RESET & BASE STYLES */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f2; color: #1a1a1a; overflow-x: hidden; }
+
+    /* LOGIN PAGE STYLES */
+    #login-screen {
+      background: linear-gradient(135deg, #185FA5 0%, #083057 100%);
+      height: 100vh; display: flex; align-items: center; justify-content: center;
+      position: fixed; width: 100%; z-index: 9999;
+    }
+    .login-container {
+      background: white; width: 100%; max-width: 400px;
+      padding: 2.5rem; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    }
+    .login-header { text-align: center; margin-bottom: 2rem; }
+    .logo-circle {
+      width: 50px; height: 50px; background: #185FA5; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;
+    }
+    .logo-circle svg { width: 28px; height: 28px; fill: white; }
+    .btn-login {
+      width: 100%; padding: 12px; background: #185FA5; color: white;
+      border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #555; }
+    .form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+    .alert { padding: 10px; border-radius: 8px; font-size: 12px; margin-bottom: 1rem; display: none; background: #FCEBEB; color: #A32D2D; }
+
+    /* FOOTER LOGIN STYLE */
+    .login-footer {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      line-height: 1.6;
+    }
+
+    /* DASHBOARD STYLES (E-RAPORT) */
+    #main-dashboard { display: none; }
+    .topbar {
+      background: white; border-bottom: 1px solid #e5e5e5; padding: 0 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 52px; position: sticky; top: 0; z-index: 10;
+    }
+    .layout { display: flex; min-height: calc(100vh - 52px); }
+    .sidebar {
+      width: 200px; background: white; border-right: 1px solid #e5e5e5;
+      padding: 1rem 0; flex-shrink: 0; position: sticky; top: 52px; height: calc(100vh - 52px);
+    }
+    .nav-section { font-size: 10px; font-weight: 600; color: #999; padding: 0 1rem; margin: 1rem 0 0.4rem; text-transform: uppercase; }
+    .nav-item { 
+      display: flex; align-items: center; gap: 8px; padding: 8px 1rem; 
+      font-size: 13px; color: #555; cursor: pointer; border-left: 2px solid transparent; 
+    }
+    .nav-item.active { background: #E6F1FB; color: #185FA5; border-left-color: #185FA5; font-weight: 600; }
+    .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .main { flex: 1; padding: 1.5rem; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .card { background: white; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+    .stat-card { background: #f0f0eb; border-radius: 8px; padding: 1rem; }
+    
+    table { width: 100%; font-size: 13px; border-collapse: collapse; }
+    th { text-align: left; padding: 8px; border-bottom: 1px solid #e5e5e5; color: #666; }
+    td { padding: 9px 8px; border-bottom: 1px solid #f0f0f0; }
+    .rapor-preview { background: white; border: 1px solid #e5e5e5; padding: 2rem; max-width: 640px; margin: 0 auto; }
+    .rapor-header { text-align: center; border-bottom: 2px solid #185FA5; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #185FA5; color: white; padding: 10px 16px; border-radius: 8px; opacity: 0; transition: 0.3s; z-index: 999; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <!-- ===================== LOGIN SCREEN ===================== -->
+  <div id="login-screen">
+    <div class="login-container">
+      <div class="login-header">
+        <div class="logo-circle">
+          <svg viewBox="0 0 16 16"><path d="M2 3h12v2H2zm0 4h8v2H2zm0 4h10v2H2z"/></svg>
+        </div>
+        <h2 style="color:#185FA5">E-Raport</h2>
+        <p style="font-size: 13px; color: #666;">Silakan masuk dengan email sekolah</p>
+      </div>
+
+      <div id="login-alert" class="alert"></div>
+
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Email Sekolah</label>
+          <input type="text" id="email" placeholder="...@smkn2sragen.sch.id" required>
+        </div>
+        <div class="form-group">
+          <label>Kata Sandi</label>
+          <input type="password" id="password" placeholder="Masukkan kata sandi...">
+        </div>
+        <button type="submit" id="btn-submit" class="btn-login">Masuk</button>
+      </form>
+
+      <!-- BAGIAN FOOTER LOGIN SESUAI PERMINTAAN -->
+      <div class="login-footer">
+        <strong>E-Raport</strong><br>
+        SMK Negeri 2 Sragen. All rights reserved
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MAIN DASHBOARD ===================== -->
+  <div id="main-dashboard">
+    <div class="topbar">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="logo-circle" style="width:28px; height:28px; margin:0;">
+          <svg viewBox="0 0 16 16" style="width:14px;"><path d="M2 3h12v2H2zm0 4h8v2H2zm0 4h10v2H2z"/></svg>
+        </div>
+        <div>
+          <div style="font-size:14px; font-weight:600;">E-Raport SMKN 2 Sragen</div>
+          <div style="font-size:11px; color:#666;">Kurikulum Merdeka</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:11px; background:#E6F1FB; color:#185FA5; padding:3px 8px; border-radius:10px;" id="user-role-badge">Role</span>
+        <button onclick="logout()" style="font-size:11px; border:none; background:none; cursor:pointer; color:red;">Keluar</button>
+        <div class="logo-circle" id="user-avatar" style="width:30px; height:30px; margin:0; font-size:12px; font-weight:bold;">..</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="sidebar" id="sidebar">
+        <div class="nav-section" id="sec-utama">Utama</div>
+        <div class="nav-item active" id="menu-dash" onclick="showPage('dashboard', this)"><div class="nav-dot"></div> Dashboard</div>
+        <div class="nav-item" id="menu-input" onclick="showPage('input', this)"><div class="nav-dot"></div> Input Nilai</div>
+        <div class="nav-item" id="menu-rapor" onclick="showPage('rapor', this)"><div class="nav-dot"></div> Cetak Rapor</div>
+        <div class="nav-section" id="sec-data">Data</div>
+        <div class="nav-item" id="menu-siswa" onclick="showPage('siswa', this)"><div class="nav-dot"></div> Data Siswa</div>
+        <div class="nav-item" id="menu-sinkron" onclick="showPage('sinkron', this)"><div class="nav-dot"></div> Sinkronisasi</div>
+      </div>
+
+      <div class="main">
+        <div class="page active" id="page-dashboard">
+          <div style="margin-bottom:1.5rem;">
+            <h2 id="welcome-msg">Selamat Datang</h2>
+            <p style="font-size:13px; color:#666;">Ringkasan data akademik sekolah</p>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div style="font-size:12px; color:#666;">Total Siswa</div>
+              <div style="font-size:22px; font-weight:600;">324</div>
+            </div>
+            <div class="stat-card">
+              <div style="font-size:12px; color:#666;">Rapor Selesai</div>
+              <div style="font-size:22px; font-weight:600;">187</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="page" id="page-rapor">
+          <div style="margin-bottom:1.5rem;">
+            <h2>Pratinjau Rapor</h2>
+            <p style="font-size:13px; color:#666;">Hasil belajar semester ini</p>
+          </div>
+          <div class="rapor-preview">
+            <div class="rapor-header">
+              <div style="font-size:11px; font-weight:600; text-transform:uppercase;">Laporan Hasil Belajar</div>
+              <h3 style="margin:5px 0;">SMK Negeri 2 Sragen</h3>
+              <p style="font-size:10px;">Jl. Dr. Sutomo No. 5, Sragen, Jawa Tengah</p>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; font-size:12px; margin-bottom:20px;">
+              <div>Nama: <strong id="r-nama">Memuat...</strong></div>
+              <div>Kelas: <strong>XI-TKJ-1</strong></div>
+              <div>NISN: <strong id="r-nisn">0072345678</strong></div>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Mata Pelajaran</th><th>Nilai</th><th>Predikat</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Matematika</td><td>88</td><td>A</td></tr>
+                <tr><td>Bahasa Indonesia</td><td>85</td><td>A</td></tr>
+                <tr><td>Produktif Kejuruan</td><td>92</td><td>A</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="text-align:center; margin-top:1rem;">
+            <button class="btn-login" style="width:auto; padding:8px 20px;" onclick="window.print()">Cetak PDF</button>
+          </div>
+        </div>
+
+        <div class="page" id="page-restricted">
+          <div class="card" style="text-align:center; padding:3rem;">
+            <h3 style="color:#A32D2D;">Akses Dibatasi</h3>
+            <p>Halaman ini hanya dapat diakses oleh Guru atau Administrator.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Berhasil!</div>
+
+  <script>
+    function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const alertBox = document.getElementById('login-alert');
+      const btn = document.getElementById('btn-submit');
+
+      if (!email.endsWith('@smkn2sragen.sch.id')) {
+        alertBox.textContent = "Error: Wajib menggunakan domain @smkn2sragen.sch.id";
+        alertBox.style.display = "block";
+        return;
+      }
+
+      const idPart = email.split('@')[0];
+      const idNumber = parseInt(idPart);
+      let role = (!isNaN(idNumber) && idNumber >= 12075 && idNumber <= 12719) ? "Siswa" : "Guru";
+
+      btn.textContent = "Memproses...";
+      setTimeout(() => {
+        setupDashboard(role, idPart);
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-dashboard').style.display = 'block';
+        showToast("Selamat datang, " + idPart);
+      }, 800);
+    }
+
+    function setupDashboard(role, id) {
+      document.getElementById('user-role-badge').textContent = role;
+      document.getElementById('user-avatar').textContent = id.substring(0, 2).toUpperCase();
+      document.getElementById('welcome-msg').textContent = "Selamat Datang, " + id;
+      
+      if (role === "Siswa") {
+        document.getElementById('menu-dash').style.display = 'none';
+        document.getElementById('menu-input').style.display = 'none';
+        document.getElementById('menu-siswa').style.display = 'none';
+        document.getElementById('menu-sinkron').style.display = 'none';
+        document.getElementById('sec-data').style.display = 'none';
+        showPage('rapor', document.getElementById('menu-rapor'));
+        document.getElementById('r-nama').textContent = "Siswa " + id;
+        document.getElementById('r-nisn').textContent = id;
+      } else {
+        document.querySelectorAll('.nav-item, .nav-section').forEach(el => el.style.display = 'flex');
+        showPage('dashboard', document.getElementById('menu-dash'));
+      }
+    }
+
+    function showPage(pageId, el) {
+      const role = document.getElementById('user-role-badge').textContent;
+      if (role === "Siswa" && pageId !== 'rapor') pageId = 'restricted';
+
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + pageId).classList.add('active');
+      if(el) el.classList.add('active');
+    }
+
+    function logout() {
+      if(confirm("Apakah Anda ingin keluar?")) location.reload();
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+  </script>
+</body>
+</html>

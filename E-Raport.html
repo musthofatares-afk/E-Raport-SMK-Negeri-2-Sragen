@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>e-Rapor SMA/SMK — Kurikulum Merdeka</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f2; color: #1a1a1a; }
+
+    /* TOPBAR */
+    .topbar {
+      background: white;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      width: 28px; height: 28px;
+      background: #185FA5;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo svg { width: 16px; height: 16px; fill: white; }
+    .brand-name { font-size: 15px; font-weight: 600; }
+    .brand-sub { font-size: 12px; color: #666; }
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
+    .badge {
+      font-size: 11px; padding: 3px 8px;
+      border-radius: 99px;
+      background: #E6F1FB; color: #185FA5; font-weight: 500;
+    }
+    .avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: #185FA5;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; color: white;
+    }
+
+    /* LAYOUT */
+    .layout { display: flex; min-height: calc(100vh - 52px); }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 200px;
+      background: white;
+      border-right: 1px solid #e5e5e5;
+      padding: 1rem 0;
+      flex-shrink: 0;
+      position: sticky;
+      top: 52px;
+      height: calc(100vh - 52px);
+      overflow-y: auto;
+    }
+    .nav-section {
+      font-size: 10px; font-weight: 600;
+      color: #999;
+      padding: 0 1rem;
+      margin: 1rem 0 0.4rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 1rem;
+      font-size: 13px; color: #555;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .nav-item:hover { background: #f5f5f2; color: #1a1a1a; }
+    .nav-item.active {
+      background: #E6F1FB; color: #185FA5;
+      border-left-color: #185FA5; font-weight: 600;
+    }
+    .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* MAIN */
+    .main { flex: 1; padding: 1.5rem; overflow-x: hidden; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page-header { margin-bottom: 1.5rem; }
+    .page-title { font-size: 18px; font-weight: 600; }
+    .page-sub { font-size: 13px; color: #666; margin-top: 3px; }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card { background: #f0f0eb; border-radius: 8px; padding: 1rem; }
+    .stat-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+    .stat-value { font-size: 22px; font-weight: 600; }
+    .stat-hint { font-size: 11px; color: #999; margin-top: 2px; }
+
+    /* CARD */
+    .card {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .card-title {
+      font-size: 14px; font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    /* FILTER */
+    .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+    .filter-row select,
+    .filter-row input {
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: white;
+      color: #1a1a1a;
+      outline: none;
+    }
+    .filter-row select:focus,
+    .filter-row input:focus { border-color: #185FA5; }
+
+    /* TABLE */
+    table { width: 100%; font-size: 13px; border-collapse: collapse; }
+    th {
+      text-align: left; font-weight: 600;
+      font-size: 12px; color: #666;
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5e5e5;
+      white-space: nowrap;
+    }
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    /* INPUT NILAI */
+    .input-nilai {
+      width: 56px; text-align: center;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-size: 13px;
+      outline: none;
+    }
+    .input-nilai:focus { border-color: #185FA5; }
+
+    /* CHIPS */
+    .nilai-chip {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 99px; font-size: 12px; font-weight: 600;
+    }
+    .nilai-a { background: #EAF3DE; color: #3B6D11; }
+    .nilai-b { background: #E6F1FB; color: #185FA5; }
+    .nilai-c { background: #FAEEDA; color: #854F0B; }
+    .nilai-d { background: #FCEBEB; color: #A32D2D; }
+
+    .status-chip {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 99px; font-size: 11px; font-weight: 600;
+    }
+    .status-selesai { background: #EAF3DE; color: #3B6D11; }
+    .status-proses { background: #FAEEDA; color: #854F0B; }
+    .status-belum { background: #f0f0eb; color: #5F5E5A; }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      border: 1px solid #ddd;
+      background: white; color: #1a1a1a;
+      transition: all 0.15s;
+    }
+    .btn:hover { background: #f5f5f2; }
+    .btn-primary { background: #185FA5; color: white; border-color: #185FA5; }
+    .btn-primary:hover { background: #0C447C; border-color: #0C447C; }
+    .btn-success { background: #3B6D11; color: white; border-color: #3B6D11; }
+    .btn-success:hover { background: #27500A; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    /* PROGRESS */
+    .progress-bar { height: 6px; background: #f0f0eb; border-radius: 99px; overflow: hidden; margin-top: 4px; }
+    .progress-fill { height: 100%; border-radius: 99px; background: #185FA5; transition: width 0.3s; }
+
+    /* RAPOR PREVIEW */
+    .rapor-preview {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 640px;
+      margin: 0 auto;
+      color: #222;
+    }
+    .rapor-header {
+      text-align: center;
+      border-bottom: 2px solid #185FA5;
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .rapor-header h3 { font-size: 14px; font-weight: 600; }
+    .rapor-header p { font-size: 12px; color: #555; }
+    .rapor-info { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 12px; margin-bottom: 1.5rem; }
+    .rapor-info-row { display: flex; gap: 6px; }
+    .rapor-info-row span:first-child { color: #555; width: 130px; flex-shrink: 0; }
+    .rapor-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 1rem; }
+    .rapor-table th { background: #185FA5; color: white; padding: 6px 8px; text-align: left; font-weight: 600; }
+    .rapor-table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+    .rapor-table tr:nth-child(even) td { background: #f8f8f8; }
+    .rapor-footer { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
+    .rapor-ttd { text-align: center; font-size: 12px; }
+    .rapor-ttd .ttd-line { border-top: 1px solid #aaa; margin-top: 50px; width: 140px; }
+
+    /* SYNC */
+    .sync-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .sync-row:last-child { border-bottom: none; }
+    .sync-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .sync-info { flex: 1; }
+    .sync-name { font-size: 13px; font-weight: 600; }
+    .sync-desc { font-size: 12px; color: #666; }
+    .sync-status { font-size: 12px; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: #185FA5; color: white;
+      padding: 10px 16px; border-radius: 8px;
+      font-size: 13px; font-weight: 500;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 999;
+    }
+    .toast.show { opacity: 1; }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="logo">
+      <svg viewBox="0 0 16 16"><path d="M2 3h12v2H2zm0 4h8v2H2zm0 4h10v2H2z"/></svg>
+    </div>
+    <div>
+      <div class="brand-name">e-Rapor</div>
+      <div class="brand-sub">SMA/SMK — Kurikulum Merdeka</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="badge">Semester Genap 2024/2025</span>
+    <div class="avatar">AS</div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="nav-section">Utama</div>
+    <div class="nav-item active" onclick="showPage('dashboard', this)"><div class="nav-dot"></div> Dashboard</div>
+    <div class="nav-item" onclick="showPage('input', this)"><div class="nav-dot"></div> Input Nilai</div>
+    <div class="nav-item" onclick="showPage('rapor', this)"><div class="nav-dot"></div> Cetak Rapor</div>
+    <div class="nav-section">Data</div>
+    <div class="nav-item" onclick="showPage('siswa', this)"><div class="nav-dot"></div> Data Siswa</div>
+    <div class="nav-item" onclick="showPage('sinkron', this)"><div class="nav-dot"></div> Sinkronisasi</div>
+    <div class="nav-section">Akun</div>
+    <div class="nav-item" onclick="showPage('pengaturan', this)"><div class="nav-dot"></div> Pengaturan</div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Ringkasan data rapor semester ini</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Siswa</div>
+          <div class="stat-value">324</div>
+          <div class="stat-hint">Kelas X, XI, XII</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Rapor Selesai</div>
+          <div class="stat-value">187</div>
+          <div class="stat-hint">57% dari total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Nilai Belum Diisi</div>
+          <div class="stat-value">42</div>
+          <div class="stat-hint">Dari 8 guru mapel</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Siap Cetak</div>
+          <div class="stat-value">145</div>
+          <div class="stat-hint">Semua nilai lengkap</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Progres input nilai per kelas</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Kelas</th>
+              <th>Wali Kelas</th>
+              <th>Jumlah Siswa</th>
+              <th>Progres</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>X-1</td><td>Budi Santoso</td><td>36</td>
+              <td>
+                <div style="font-size:12px;color:#666;">100%</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+              </td>
+              <td><span class="status-chip status-selesai">Selesai</span></td>
+            </tr>
+            <tr>
+              <td>X-2</td><td>Siti Rahayu</td><td>34</td>
+              <td>
+                <div style="font-size:12px;color:#666;">85%</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>
+              </td>
+              <td><span class="status-chip status-proses">Proses</span></td>
+            </tr>
+            <tr>
+              <td>XI-IPA-1</td><td>Ahmad Fauzi</td><td>38</td>
+              <td>
+                <div style="font-size:12px;color:#666;">100%</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+              </td>
+              <td><span class="status-chip status-selesai">Selesai</span></td>
+            </tr>
+            <tr>
+              <td>XI-IPS-1</td><td>Dewi Lestari</td><td>35</td>
+              <td>
+                <div style="font-size:12px;color:#666;">60%</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+              </td>
+              <td><span class="status-chip status-proses">Proses</span></td>
+            </tr>
+            <tr>
+              <td>XII-IPA-1</td><td>Hendra Wijaya</td><td>37</td>
+              <td>
+                <div style="font-size:12px;color:#666;">30%</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div>
+              </td>
+              <td><span class="status-chip status-belum">Belum</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== INPUT NILAI ===================== -->
+    <div class="page" id="page-input">
+      <div class="page-header">
+        <div class="page-title">Input Nilai</div>
+        <div class="page-sub">Masukkan nilai sumatif siswa per mata pelajaran</div>
+      </div>
+      <div class="filter-row">
+        <select id="sel-kelas" onchange="updateLabel()">
+          <option>X-1</option><option>X-2</option>
+          <option>XI-IPA-1</option><option>XI-IPS-1</option><option>XII-IPA-1</option>
+        </select>
+        <select id="sel-mapel" onchange="updateLabel()">
+          <option>Matematika</option><option>Bahasa Indonesia</option>
+          <option>Bahasa Inggris</option><option>Fisika</option>
+          <option>Kimia</option><option>Biologi</option>
+        </select>
+        <select>
+          <option>Semester Genap 2024/2025</option>
+          <option>Semester Ganjil 2024/2025</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <span>Daftar Nilai — <span id="label-kelas">X-1</span> / <span id="label-mapel">Matematika</span></span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-sm" onclick="resetNilai()">Reset</button>
+            <button class="btn btn-primary btn-sm" onclick="simpanNilai()">Simpan Nilai</button>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:30px">No</th>
+              <th>Nama Siswa</th>
+              <th>NISN</th>
+              <th style="text-align:center">S. Harian</th>
+              <th style="text-align:center">S. Tengah</th>
+              <th style="text-align:center">S. Akhir</th>
+              <th style="text-align:center">Rata-rata</th>
+              <th style="text-align:center">Predikat</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-nilai"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== CETAK RAPOR ===================== -->
+    <div class="page" id="page-rapor">
+      <div class="page-header">
+        <div class="page-title">Cetak Rapor</div>
+        <div class="page-sub">Pratinjau dan cetak rapor siswa</div>
+      </div>
+      <div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+        <div style="width:220px;flex-shrink:0;">
+          <div class="card" style="padding:1rem;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:10px;">Pilih Siswa</div>
+            <div class="filter-row" style="flex-direction:column;gap:6px;">
+              <select style="width:100%">
+                <option>X-1</option><option>X-2</option><option>XI-IPA-1</option>
+              </select>
+              <input type="text" placeholder="Cari nama..." style="width:100%">
+            </div>
+            <div id="siswa-list" style="margin-top:8px;"></div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:300px;">
+          <div class="rapor-preview">
+            <div class="rapor-header">
+              <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">
+                Laporan Hasil Belajar Peserta Didik
+              </div>
+              <h3 style="margin-top:4px;">SMA Negeri 1 Surakarta</h3>
+              <p>Jl. Letjen Suprapto No. 12, Surakarta, Jawa Tengah</p>
+              <p style="margin-top:2px;">Tahun Pelajaran 2024/2025 — Semester Genap</p>
+            </div>
+            <div class="rapor-info">
+              <div><div class="rapor-info-row"><span>Nama</span><span>: <strong id="r-nama">Andi Setiawan</strong></span></div></div>
+              <div><div class="rapor-info-row"><span>Kelas</span><span>: <strong>X-1</strong></span></div></div>
+              <div><div class="rapor-info-row"><span>NISN</span><span>: 0072345678</span></div></div>
+              <div><div class="rapor-info-row"><span>Wali Kelas</span><span>: Budi Santoso, S.Pd.</span></div></div>
+            </div>
+            <table class="rapor-table">
+              <thead>
+                <tr>
+                  <th>No</th><th>Mata Pelajaran</th>
+                  <th style="text-align:center">Nilai</th>
+                  <th>Predikat</th><th>Capaian</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>Matematika</td><td style="text-align:center">88</td><td>A</td><td>Sangat Baik</td></tr>
+                <tr><td>2</td><td>Bahasa Indonesia</td><td style="text-align:center">85</td><td>A</td><td>Sangat Baik</td></tr>
+                <tr><td>3</td><td>Bahasa Inggris</td><td style="text-align:center">79</td><td>B</td><td>Baik</td></tr>
+                <tr><td>4</td><td>Fisika</td><td style="text-align:center">82</td><td>A</td><td>Sangat Baik</td></tr>
+                <tr><td>5</td><td>Kimia</td><td style="text-align:center">76</td><td>B</td><td>Baik</td></tr>
+                <tr><td>6</td><td>Biologi</td><td style="text-align:center">90</td><td>A</td><td>Sangat Baik</td></tr>
+                <tr><td>7</td><td>PJOK</td><td style="text-align:center">85</td><td>A</td><td>Sangat Baik</td></tr>
+                <tr><td>8</td><td>Pendidikan Agama</td><td style="text-align:center">92</td><td>A</td><td>Sangat Baik</td></tr>
+              </tbody>
+            </table>
+            <div style="font-size:12px;margin-top:1rem;">
+              <div style="margin-bottom:4px;font-weight:600;">Kehadiran</div>
+              <div style="display:flex;gap:1.5rem;color:#555;">
+                <span>Sakit: 2 hari</span>
+                <span>Izin: 1 hari</span>
+                <span>Alpa: 0 hari</span>
+              </div>
+            </div>
+            <div class="rapor-footer">
+              <div class="rapor-ttd">
+                <div>Surakarta, 21 Juni 2025</div>
+                <div style="margin-top:4px;">Kepala Sekolah,</div>
+                <div class="ttd-line" style="margin:0 auto;"></div>
+                <div style="font-weight:600;">Dr. Hj. Sri Mulyani, M.Pd.</div>
+                <div style="color:#777;">NIP. 19650512 199003 2 004</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:1rem;justify-content:flex-end;">
+            <button class="btn" onclick="showToast('Pratinjau sebelum cetak sudah ditampilkan')">Pratinjau</button>
+            <button class="btn btn-success" onclick="cetakRapor()">Cetak PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== DATA SISWA ===================== -->
+    <div class="page" id="page-siswa">
+      <div class="page-header">
+        <div class="page-title">Data Siswa</div>
+        <div class="page-sub">Daftar peserta didik aktif — sinkron dari DAPODIK</div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <span>Kelas X-1 (36 siswa)</span>
+          <button class="btn btn-sm" onclick="showToast('Mengekspor data ke Excel...')">Ekspor Excel</button>
+        </div>
+        <div class="filter-row">
+          <input type="text" placeholder="Cari nama atau NISN...">
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>No</th><th>Nama Lengkap</th><th>NISN</th>
+              <th>Jenis Kelamin</th><th>Tempat, Tgl Lahir</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>Andi Setiawan</td><td>0072345678</td><td>L</td><td>Solo, 12 Mar 2008</td><td><span class="status-chip status-selesai">Aktif</span></td></tr>
+            <tr><td>2</td><td>Bintang Pratiwi</td><td>0083456789</td><td>P</td><td>Klaten, 5 Jun 2008</td><td><span class="status-chip status-selesai">Aktif</span></td></tr>
+            <tr><td>3</td><td>Cahyo Nugroho</td><td>0094567890</td><td>L</td><td>Solo, 20 Jan 2008</td><td><span class="status-chip status-selesai">Aktif</span></td></tr>
+            <tr><td>4</td><td>Dinda Ayu Lestari</td><td>0105678901</td><td>P</td><td>Sukoharjo, 8 Sep 2008</td><td><span class="status-chip status-selesai">Aktif</span></td></tr>
+            <tr><td>5</td><td>Eko Prasetyo</td><td>0116789012</td><td>L</td><td>Karanganyar, 17 Nov 2008</td><td><span class="status-chip status-proses">Pindah</span></td></tr>
+            <tr><td>6</td><td>Fajar Ramadhan</td><td>0127890123</td><td>L</td><td>Solo, 3 Feb 2008</td><td><span class="status-chip status-selesai">Aktif</span></td></tr>
+            <tr><td>7</td><td>Gita Puspita</td><td>0138901234</td><td>P</td><td>Wonogiri, 22 Jul 2008</td><td><span class="status-chip status-selesai">Aktif</span></td></tr>
+            <tr><td>8</td><td>Hendra Kusuma</td><td>0149012345</td><td>L</td><td>Boyolali, 9 Apr 2008</td><td><span class="status-chip status-selesai">Aktif</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================== SINKRONISASI ===================== -->
+    <div class="page" id="page-sinkron">
+      <div class="page-header">
+        <div class="page-title">Sinkronisasi DAPODIK</div>
+        <div class="page-sub">Tarik data terbaru dari server DAPODIK</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Status koneksi &amp; sinkronisasi</div>
+        <div class="sync-row">
+          <div class="sync-icon" style="background:#EAF3DE;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="#3B6D11"><circle cx="8" cy="8" r="6"/></svg>
+          </div>
+          <div class="sync-info">
+            <div class="sync-name">DAPODIK</div>
+            <div class="sync-desc">Terakhir sync: 20 Apr 2025, 09.14 WIB</div>
+          </div>
+          <span class="sync-status" style="color:#3B6D11;font-weight:600;">Terhubung</span>
+        </div>
+        <div class="sync-row">
+          <div class="sync-icon" style="background:#EAF3DE;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="#3B6D11"><circle cx="8" cy="8" r="6"/></svg>
+          </div>
+          <div class="sync-info">
+            <div class="sync-name">Data Siswa</div>
+            <div class="sync-desc">324 siswa aktif tersinkronisasi</div>
+          </div>
+          <span class="sync-status" style="color:#3B6D11;font-weight:600;">Sinkron</span>
+        </div>
+        <div class="sync-row">
+          <div class="sync-icon" style="background:#FAEEDA;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="#854F0B"><circle cx="8" cy="8" r="6"/></svg>
+          </div>
+          <div class="sync-info">
+            <div class="sync-name">Data Guru &amp; Rombel</div>
+            <div class="sync-desc">Ada pembaruan tersedia dari DAPODIK</div>
+          </div>
+          <span class="sync-status" style="color:#854F0B;font-weight:600;">Perlu sync</span>
+        </div>
+        <div class="sync-row">
+          <div class="sync-icon" style="background:#EAF3DE;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="#3B6D11"><circle cx="8" cy="8" r="6"/></svg>
+          </div>
+          <div class="sync-info">
+            <div class="sync-name">Mata Pelajaran</div>
+            <div class="sync-desc">42 mata pelajaran tersinkronisasi</div>
+          </div>
+          <span class="sync-status" style="color:#3B6D11;font-weight:600;">Sinkron</span>
+        </div>
+        <div style="margin-top:1rem;">
+          <button class="btn btn-primary" onclick="showToast('Memulai sinkronisasi DAPODIK...')">Sinkronisasi Sekarang</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PENGATURAN ===================== -->
+    <div class="page" id="page-pengaturan">
+      <div class="page-header">
+        <div class="page-title">Pengaturan</div>
+        <div class="page-sub">Konfigurasi data sekolah dan akun pengguna</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Profil Sekolah</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <div style="font-size:12px;color:#666;margin-bottom:4px;">Nama Sekolah</div>
+            <input style="width:100%;font-size:13px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;outline:none;" value="SMA Negeri 1 Surakarta">
+          </div>
+          <div>
+            <div style="font-size:12px;color:#666;margin-bottom:4px;">NPSN</div>
+            <input style="width:100%;font-size:13px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;outline:none;" value="20328118">
+          </div>
+          <div>
+            <div style="font-size:12px;color:#666;margin-bottom:4px;">Kurikulum</div>
+            <select style="width:100%;font-size:13px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;outline:none;">
+              <option selected>Kurikulum Merdeka</option>
+              <option>K-13</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:12px;color:#666;margin-bottom:4px;">Tahun Pelajaran</div>
+            <select style="width:100%;font-size:13px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;outline:none;">
+              <option selected>2024/2025</option>
+              <option>2023/2024</option>
+            </select>
+          </div>
+          <div style="grid-column:span 2;">
+            <div style="font-size:12px;color:#666;margin-bottom:4px;">Alamat Sekolah</div>
+            <input style="width:100%;font-size:13px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;outline:none;" value="Jl. Letjen Suprapto No. 12, Surakarta, Jawa Tengah">
+          </div>
+        </div>
+        <div style="margin-top:1rem;">
+          <button class="btn btn-primary" onclick="showToast('Pengaturan berhasil disimpan!')">Simpan Perubahan</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Akun Pengguna</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;">
+          <div class="avatar" style="width:40px;height:40px;font-size:14px;">AS</div>
+          <div>
+            <div style="font-size:14px;font-weight:600;">Admin Sekolah</div>
+            <div style="font-size:12px;color:#666;">admin@sman1solo.sch.id — Role: Administrator</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn btn-sm" onclick="showToast('Fitur ganti password dibuka')">Ganti Password</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── DATA ───────────────────────────────────────────────
+  const siswaData = [
+    {nama:'Andi Setiawan',    nisn:'0072345678', sh:85, st:88, sa:91},
+    {nama:'Bintang Pratiwi',  nisn:'0083456789', sh:78, st:80, sa:82},
+    {nama:'Cahyo Nugroho',    nisn:'0094567890', sh:72, st:75, sa:70},
+    {nama:'Dinda Ayu Lestari',nisn:'0105678901', sh:90, st:92, sa:95},
+    {nama:'Eko Prasetyo',     nisn:'0116789012', sh:65, st:68, sa:60},
+    {nama:'Fajar Ramadhan',   nisn:'0127890123', sh:88, st:86, sa:89},
+    {nama:'Gita Puspita',     nisn:'0138901234', sh:95, st:93, sa:96},
+    {nama:'Hendra Kusuma',    nisn:'0149012345', sh:70, st:72, sa:68},
+  ];
+
+  // ─── HELPERS ────────────────────────────────────────────
+  function predikat(n) {
+    if (n >= 90) return {p:'A', cls:'nilai-a'};
+    if (n >= 80) return {p:'B', cls:'nilai-b'};
+    if (n >= 70) return {p:'C', cls:'nilai-c'};
+    return {p:'D', cls:'nilai-d'};
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ─── NAVIGASI ───────────────────────────────────────────
+  function showPage(id, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  // ─── INPUT NILAI ────────────────────────────────────────
+  function renderNilai() {
+    const tbody = document.getElementById('tbody-nilai');
+    tbody.innerHTML = siswaData.map((s, i) => {
+      const avg = Math.round((s.sh + s.st + s.sa) / 3);
+      const pr = predikat(avg);
+      return `<tr>
+        <td>${i + 1}</td>
+        <td>${s.nama}</td>
+        <td style="color:#999">${s.nisn}</td>
+        <td style="text-align:center">
+          <input class="input-nilai" type="number" min="0" max="100" value="${s.sh}"
+            onchange="updateNilai(${i},'sh',this.value)">
+        </td>
+        <td style="text-align:center">
+          <input class="input-nilai" type="number" min="0" max="100" value="${s.st}"
+            onchange="updateNilai(${i},'st',this.value)">
+        </td>
+        <td style="text-align:center">
+          <input class="input-nilai" type="number" min="0" max="100" value="${s.sa}"
+            onchange="updateNilai(${i},'sa',this.value)">
+        </td>
+        <td style="text-align:center;font-weight:600" id="avg-${i}">${avg}</td>
+        <td style="text-align:center">
+          <span class="nilai-chip ${pr.cls}" id="pred-${i}">${pr.p}</span>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function updateNilai(i, field, val) {
+    siswaData[i][field] = Math.min(100, Math.max(0, parseInt(val) || 0));
+    const avg = Math.round((siswaData[i].sh + siswaData[i].st + siswaData[i].sa) / 3);
+    const pr = predikat(avg);
+    document.getElementById('avg-' + i).textContent = avg;
+    const el = document.getElementById('pred-' + i);
+    el.textContent = pr.p;
+    el.className = 'nilai-chip ' + pr.cls;
+  }
+
+  function updateLabel() {
+    document.getElementById('label-kelas').textContent = document.getElementById('sel-kelas').value;
+    document.getElementById('label-mapel').textContent = document.getElementById('sel-mapel').value;
+  }
+
+  function resetNilai() {
+    siswaData.forEach(s => {
+      s.sh = Math.floor(Math.random() * 35) + 60;
+      s.st = Math.floor(Math.random() * 35) + 60;
+      s.sa = Math.floor(Math.random() * 35) + 60;
+    });
+    renderNilai();
+    showToast('Nilai direset dengan data acak');
+  }
+
+  function simpanNilai() {
+    showToast('Nilai berhasil disimpan!');
+  }
+
+  // ─── CETAK RAPOR ────────────────────────────────────────
+  function renderSiswaList() {
+    const list = document.getElementById('siswa-list');
+    list.innerHTML = siswaData.map(s => `
+      <div onclick="pilihSiswa('${s.nama}')"
+        style="padding:7px 8px;border-radius:6px;cursor:pointer;font-size:13px;
+               border-bottom:1px solid #f0f0f0;"
+        onmouseover="this.style.background='#f5f5f2'"
+        onmouseout="this.style.background=''">
+        ${s.nama}
+      </div>`).join('');
+  }
+
+  function pilihSiswa(nama) {
+    document.getElementById('r-nama').textContent = nama;
+    showToast('Menampilkan rapor ' + nama);
+  }
+
+  function cetakRapor() {
+    showToast('Membuka dialog cetak PDF...');
+    setTimeout(() => window.print(), 500);
+  }
+
+  // ─── INIT ───────────────────────────────────────────────
+  renderNilai();
+  renderSiswaList();
+</script>
+
+</body>
+</html>
